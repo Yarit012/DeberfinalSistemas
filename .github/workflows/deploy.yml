@@ -1,0 +1,29 @@
+name: Deploy to Ubuntu Server
+
+on:
+  push:
+    branches:
+      - main  # Se activa cuando se hace un push en la rama main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Ejecuta en un contenedor Ubuntu
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2  # Revisa el código del repositorio
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3  # Configura el agente SSH
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Usa la clave privada SSH desde los secretos
+
+      - name: Deploy to server via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /ruta/a/tu/app  # Navega a la carpeta donde está la app en el servidor
+            git pull origin main  # Realiza git pull para obtener los últimos cambios
+            pm2 restart app  # Si usas pm2, reinicia la app (ajusta según tu configuración)
+          EOF
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Usar la clave privada SSH para la autenticación
